@@ -95,6 +95,9 @@ out:
 static struct net *batadv_getlink_net(const struct net_device *netdev,
 				      struct net *fallback_net)
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
+	return fallback_net;
+#else
 	if (!netdev->rtnl_link_ops)
 		return fallback_net;
 
@@ -102,6 +105,7 @@ static struct net *batadv_getlink_net(const struct net_device *netdev,
 		return fallback_net;
 
 	return netdev->rtnl_link_ops->get_link_net(netdev);
+#endif
 }
 
 /**
