@@ -1002,6 +1002,7 @@ struct batadv_priv_bat_v {
  * @soft_iface: net device which holds this struct as private data
  * @bat_counters: mesh internal traffic statistic counters (see batadv_counters)
  * @aggregated_ogms: bool indicating whether OGM aggregation is enabled
+ * @play_dead: drop all rx/tx to/from device
  * @bonding: bool indicating whether traffic bonding is enabled
  * @fragmentation: bool indicating whether traffic fragmentation is enabled
  * @packet_size_max: max packet size that can be transmitted via
@@ -1056,6 +1057,7 @@ struct batadv_priv {
 	struct net_device *soft_iface;
 	u64 __percpu *bat_counters; /* Per cpu counters */
 	atomic_t aggregated_ogms;
+	atomic_t play_dead;
 	atomic_t bonding;
 	atomic_t fragmentation;
 	atomic_t packet_size_max;

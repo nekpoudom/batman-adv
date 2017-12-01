@@ -46,6 +46,7 @@
 #include <net/dsfield.h>
 #include <net/rtnetlink.h>
 #include <uapi/linux/batman_adv.h>
+#include <uapi/linux/batfilter_genl.h>
 
 #include "bat_algo.h"
 #include "bat_iv_ogm.h"
@@ -453,6 +454,9 @@ int batadv_batman_skb_recv(struct sk_buff *skb, struct net_device *dev,
 	if (atomic_read(&bat_priv->mesh_state) != BATADV_MESH_ACTIVE)
 		goto err_free;
 
+	if (atomic_read(&bat_priv->play_dead))
+		goto err_free;
+
 	/* discard frames on not active interfaces */
 	if (hard_iface->if_status != BATADV_IF_ACTIVE)
 		goto err_free;
@@ -654,3 +658,4 @@ MODULE_SUPPORTED_DEVICE(BATADV_DRIVER_DEVICE);
 MODULE_VERSION(BATADV_SOURCE_VERSION);
 MODULE_ALIAS_RTNL_LINK("batadv");
 MODULE_ALIAS_GENL_FAMILY(BATADV_NL_NAME);
+MODULE_ALIAS_GENL_FAMILY(BATFILTER_GENL_NAME);

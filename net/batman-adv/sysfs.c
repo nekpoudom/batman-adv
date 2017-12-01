@@ -695,6 +695,7 @@ BATADV_ATTR_SIF_BOOL(network_coding, 0644, batadv_nc_status_update);
 #endif
 static BATADV_ATTR(isolation_mark, 0644, batadv_show_isolation_mark,
 		   batadv_store_isolation_mark);
+BATADV_ATTR_SIF_BOOL(play_dead, 0644, NULL);
 
 static struct batadv_attribute *batadv_mesh_attrs[] = {
 	&batadv_attr_aggregated_ogms,
@@ -722,6 +723,7 @@ static struct batadv_attribute *batadv_mesh_attrs[] = {
 	&batadv_attr_network_coding,
 #endif
 	&batadv_attr_isolation_mark,
+	&batadv_attr_play_dead,
 	NULL,
 };
 
