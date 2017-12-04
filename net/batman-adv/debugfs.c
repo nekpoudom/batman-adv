@@ -183,6 +183,176 @@ struct batadv_debuginfo batadv_debuginfo_##_name = {	\
 	},						\
 }
 
+/**
+ * batadv_debuginfo_peer_filter_seq_start() - Lock peer_filter_list and start
+ *  iteration over list
+ * @m: seq file
+ * @pos: position in list
+ */
+static void *batadv_debuginfo_peer_filter_seq_start(struct seq_file *m,
+						    loff_t *pos)
+	__acquires(&bat_priv->peer_filter_lock)
+{
+	struct net_device *net_dev = (struct net_device *)m->private;
+	struct batadv_priv *bat_priv = netdev_priv(net_dev);
+
+	spin_lock_bh(&bat_priv->peer_filter_lock);
+	return seq_list_start(&bat_priv->peer_filter_list, *pos);
+}
+
+/**
+ * batadv_debuginfo_peer_filter_seq_next() - Step to next entry
+ *  in peer_filter_list
+ * @m: seq file
+ * @v: current list entry
+ * @pos: position in list
+ */
+static void *batadv_debuginfo_peer_filter_seq_next(struct seq_file *m, void *v,
+						   loff_t *pos)
+{
+	struct net_device *net_dev = (struct net_device *)m->private;
+	struct batadv_priv *bat_priv = netdev_priv(net_dev);
+
+	return seq_list_next(v, &bat_priv->peer_filter_list, pos);
+}
+
+/**
+ * batadv_debuginfo_peer_filter_seq_stop() - Unlock peer filter list
+ * @m: seq file
+ * @v: current list entry
+ */
+static void batadv_debuginfo_peer_filter_seq_stop(struct seq_file *m, void *v)
+	__releases(&bat_priv->peer_filter_lock)
+{
+	struct net_device *net_dev = (struct net_device *)m->private;
+	struct batadv_priv *bat_priv = netdev_priv(net_dev);
+
+	spin_unlock_bh(&bat_priv->peer_filter_lock);
+}
+
+/**
+ * batadv_debuginfo_peer_filter_seq_show() - Print single peer filter entry
+ * @m: seq file
+ * @v: list entry to print
+ *
+ * Return: 0 on success or negative error number in case of failure
+ */
+static int batadv_debuginfo_peer_filter_seq_show(struct seq_file *m, void *v)
+{
+	struct batadv_peer_filter *peer_filter;
+
+	peer_filter = list_entry(v, struct batadv_peer_filter, list);
+	seq_printf(m, "%pM,%hhu\n", peer_filter->mac, peer_filter->loss_rate);
+
+	return 0;
+}
+
+static const struct seq_operations batadv_debuginfo_peer_filter_seq_ops = {
+	.start	= batadv_debuginfo_peer_filter_seq_start,
+	.next	= batadv_debuginfo_peer_filter_seq_next,
+	.stop	= batadv_debuginfo_peer_filter_seq_stop,
+	.show	= batadv_debuginfo_peer_filter_seq_show,
+};
+
+/**
+ * batadv_peer_filter_open() - Open handler for /sys/kernel/debug/$i/peer_filter
+ * @bat_priv: the bat priv with all the soft interface information
+ * @mac: mac address to be added
+ *
+ * Return: 0 on success or negative error number in case of failure
+ */
+static int batadv_peer_filter_open(struct inode *inode, struct file *file)
+{
+	struct seq_file *m;
+	int ret;
+
+	ret = seq_open(file, &batadv_debuginfo_peer_filter_seq_ops);
+	if (ret)
+		return ret;
+
+	/* copy net_dev pointer to seq_file */
+	m = file->private_data;
+	m->private = inode->i_private;
+
+	return 0;
+}
+
+/**
+ * batadv_peer_filter_write() - Parse peer_filter rule from user
+ * @file: pointer to the seq_file
+ * @buf: userspace buffer
+ * @count: length of userspace buffer
+ * @ppos: position inside the file
+ *
+ * Return: 0 on success or negative error number in case of failure
+ */
+static ssize_t batadv_peer_filter_write(struct file *file,
+					const char __user *buf,
+					size_t count, loff_t *ppos)
+{
+	struct seq_file *m = file->private_data;
+	struct net_device *net_dev = (struct net_device *)m->private;
+	struct batadv_priv *bat_priv = netdev_priv(net_dev);
+	char *data = NULL;
+	u8 mac[ETH_ALEN];
+	int ret;
+	char c;
+	u8 loss_rate;
+
+	if (!count)
+		return count;
+
+	/* parse user string */
+	data = memdup_user_nul(buf, count);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
+
+	ret = sscanf(data, "%c%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx,%hhu",
+		     &c, &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5],
+		     &loss_rate);
+	if (ret < 7) {
+		count = -EINVAL;
+		goto free_data;
+	}
+
+	if (ret < 8)
+		loss_rate = 255;
+
+	if (c != '+' && c != '-') {
+		count = -EINVAL;
+		goto free_data;
+	}
+
+	/* modify the list */
+	if (c == '+')
+		ret = batadv_add_peer_filter(bat_priv, mac, loss_rate);
+	else
+		ret = batadv_del_peer_filter(bat_priv, mac);
+
+	if (ret < 0)
+		count = ret;
+
+free_data:
+	kfree(data);
+
+	return count;
+}
+
+static struct batadv_debuginfo batadv_debuginfo_peer_filter = {
+	.attr = {
+		.name = "peer_filter",
+		.mode = 0644,
+	},
+	.fops = {
+		.owner = THIS_MODULE,
+		.open = batadv_peer_filter_open,
+		.write = batadv_peer_filter_write,
+		.read	= seq_read,
+		.llseek = seq_lseek,
+		.release = seq_release,
+	},
+};
+
 /* the following attributes are general and therefore they will be directly
  * placed in the BATADV_DEBUGFS_SUBDIR subdirectory of debugfs
  */
@@ -219,6 +389,7 @@ static struct batadv_debuginfo *batadv_mesh_debuginfos[] = {
 	&batadv_debuginfo_originators,
 	&batadv_debuginfo_gateways,
 	&batadv_debuginfo_transtable_global,
+	&batadv_debuginfo_peer_filter,
 #ifdef CONFIG_BATMAN_ADV_BLA
 	&batadv_debuginfo_bla_claim_table,
 	&batadv_debuginfo_bla_backbone_table,

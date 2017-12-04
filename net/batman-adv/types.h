@@ -997,6 +997,18 @@ struct batadv_priv_bat_v {
 };
 
 /**
+ * struct batadv_peer_filter - probabilistic blacklisted peer entry
+ * @mac: mac address of black listed peer
+ * @loss_rate: probability that packet will be lost (0 == 0%, 255 == 100%)
+ * @list: list node for batadv_&batadv_priv->peer_filter_list
+ */
+struct batadv_peer_filter {
+	u8 mac[ETH_ALEN];
+	u8 loss_rate;
+	struct list_head list;
+};
+
+/**
  * struct batadv_priv - per mesh interface data
  * @mesh_state: current status of the mesh (inactive/active/deactivating)
  * @soft_iface: net device which holds this struct as private data
@@ -1090,6 +1102,8 @@ struct batadv_priv {
 	struct batadv_hashtable *orig_hash;
 	spinlock_t forw_bat_list_lock; /* protects forw_bat_list */
 	spinlock_t forw_bcast_list_lock; /* protects forw_bcast_list */
+	spinlock_t peer_filter_lock; /* protects peer_filter_list */
+	struct list_head peer_filter_list;
 	spinlock_t tp_list_lock; /* protects tp_list */
 	atomic_t tp_num;
 	struct delayed_work orig_work;
