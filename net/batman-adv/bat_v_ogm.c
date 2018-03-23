@@ -294,8 +294,13 @@ static u32 batadv_v_forward_penalty(struct batadv_priv *bat_priv,
 				    struct batadv_hard_iface *if_outgoing,
 				    u32 throughput)
 {
+	int iface_penalty = atomic_read(&if_incoming->iface_penalty);
 	int hop_penalty = atomic_read(&bat_priv->hop_penalty);
 	int hop_penalty_max = BATADV_TQ_MAX_VALUE;
+
+	if (iface_penalty)
+		throughput = throughput * (hop_penalty_max - iface_penalty) /
+			     hop_penalty_max;
 
 	/* Don't apply hop penalty in default originator table. */
 	if (if_outgoing == BATADV_IF_DEFAULT)

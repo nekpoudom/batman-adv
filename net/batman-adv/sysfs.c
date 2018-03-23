@@ -1125,6 +1125,8 @@ static ssize_t batadv_show_throughput_override(struct kobject *kobj,
 static BATADV_ATTR(mesh_iface, 0644, batadv_show_mesh_iface,
 		   batadv_store_mesh_iface);
 static BATADV_ATTR(iface_status, 0444, batadv_show_iface_status, NULL);
+BATADV_ATTR_HIF_UINT(iface_penalty, iface_penalty, 0644, 0, BATADV_TQ_MAX_VALUE,
+		     NULL);
 #ifdef CONFIG_BATMAN_ADV_BATMAN_V
 BATADV_ATTR_HIF_UINT(elp_interval, bat_v.elp_interval, 0644,
 		     2 * BATADV_JITTER, INT_MAX, NULL);
@@ -1135,6 +1137,7 @@ static BATADV_ATTR(throughput_override, 0644, batadv_show_throughput_override,
 static struct batadv_attribute *batadv_batman_attrs[] = {
 	&batadv_attr_mesh_iface,
 	&batadv_attr_iface_status,
+	&batadv_attr_iface_penalty,
 #ifdef CONFIG_BATMAN_ADV_BATMAN_V
 	&batadv_attr_elp_interval,
 	&batadv_attr_throughput_override,

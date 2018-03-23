@@ -459,6 +459,12 @@ static u8 batadv_hop_penalty(u8 tq, const struct batadv_priv *bat_priv)
 	return new_tq;
 }
 
+/* apply interface penalty */
+static inline u8 batadv_iface_penalty(struct batadv_hard_iface *hard_iface)
+{
+	return BATADV_TQ_MAX_VALUE - atomic_read(&hard_iface->iface_penalty);
+}
+
 /**
  * batadv_iv_ogm_aggr_packet() - checks if there is another OGM attached
  * @buff_pos: current position in the skb
@@ -1272,14 +1278,15 @@ static bool batadv_iv_ogm_calc_tq(struct batadv_orig_node *orig_node,
 	inv_asym_penalty /= neigh_rq_max_cube;
 	tq_asym_penalty = BATADV_TQ_MAX_VALUE - inv_asym_penalty;
 
+	tq_iface_penalty = batadv_iface_penalty(if_incoming);
+
 	/* penalize if the OGM is forwarded on the same interface. WiFi
 	 * interfaces and other half duplex devices suffer from throughput
 	 * drops as they can't send and receive at the same time.
 	 */
-	tq_iface_penalty = BATADV_TQ_MAX_VALUE;
 	if (if_outgoing && if_incoming == if_outgoing &&
 	    batadv_is_wifi_hardif(if_outgoing))
-		tq_iface_penalty = batadv_hop_penalty(BATADV_TQ_MAX_VALUE,
+		tq_iface_penalty = batadv_hop_penalty(tq_iface_penalty,
 						      bat_priv);
 
 	combined_tq = batadv_ogm_packet->tq *

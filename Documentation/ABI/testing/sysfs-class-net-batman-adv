@@ -6,6 +6,15 @@ Description:
                 Defines the interval in milliseconds in which batman
                 emits probing packets for neighbor sensing (ELP).
 
+What:           /sys/class/net/<iface>/batman-adv/iface_penalty
+Date:           Mar 2018
+Contact:        Linus Lüssing <linus.luessing@c0d3.blue>
+Description:
+                Defines the penalty which will be applied to the
+                tq-field of an originator message received on
+		this interface. This allows to discourage using
+		the according interface for packet forwarding.
+
 What:           /sys/class/net/<iface>/batman-adv/iface_status
 Date:           May 2010
 Contact:        Marek Lindner <mareklindner@neomailbox.ch>
