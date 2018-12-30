@@ -153,7 +153,7 @@ batadv_dat_snoop_outgoing_dhcp_ack(struct batadv_priv *bat_priv,
 {
 }
 
-static void batadv_dat_snoop_incoming_dhcp_ack(struct batadv_priv *bat_priv,
+static inline void batadv_dat_snoop_incoming_dhcp_ack(struct batadv_priv *bat_priv,
 					struct sk_buff *skb, int hdr_size)
 {
 }
