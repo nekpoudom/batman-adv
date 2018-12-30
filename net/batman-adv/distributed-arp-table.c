@@ -19,6 +19,7 @@
 #include "distributed-arp-table.h"
 #include "main.h"
 
+#include <asm/unaligned.h>
 #include <linux/atomic.h>
 #include <linux/bitops.h>
 #include <linux/byteorder/generic.h>
@@ -47,7 +48,6 @@
 #include <linux/workqueue.h>
 #include <net/arp.h>
 #include <net/genetlink.h>
-#include <net/ip.h>
 #include <net/netlink.h>
 #include <net/sock.h>
 #include <uapi/linux/batman_adv.h>
