@@ -153,6 +153,11 @@ batadv_dat_snoop_outgoing_dhcp_ack(struct batadv_priv *bat_priv,
 {
 }
 
+static void batadv_dat_snoop_incoming_dhcp_ack(struct batadv_priv *bat_priv,
+					struct sk_buff *skb, int hdr_size)
+{
+}
+
 static inline bool
 batadv_dat_drop_broadcast_packet(struct batadv_priv *bat_priv,
 				 struct batadv_forw_packet *forw_packet)
